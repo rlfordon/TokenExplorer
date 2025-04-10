@@ -29,17 +29,24 @@ interface ResultsPanelProps {
   onAutoContinueToggle: (enabled: boolean) => void;
 }
 
-// Token colors for visual distinction
-const tokenColors = [
-  "bg-blue-100 hover:bg-blue-200",
-  "bg-green-100 hover:bg-green-200",
-  "bg-purple-100 hover:bg-purple-200",
-  "bg-yellow-100 hover:bg-yellow-200",
-  "bg-pink-100 hover:bg-pink-200",
-  "bg-teal-100 hover:bg-teal-200",
-  "bg-orange-100 hover:bg-orange-200",
-  "bg-indigo-100 hover:bg-indigo-200",
-  "bg-red-100 hover:bg-red-200",
+// Get token color based on probability
+const getTokenColorClass = (probability: number): string => {
+  if (probability >= 0.9) return "bg-green-100 hover:bg-green-200 border-green-300"; // Very high probability
+  if (probability >= 0.7) return "bg-teal-100 hover:bg-teal-200 border-teal-300"; // High probability  
+  if (probability >= 0.5) return "bg-blue-100 hover:bg-blue-200 border-blue-300"; // Medium probability
+  if (probability >= 0.3) return "bg-yellow-100 hover:bg-yellow-200 border-yellow-300"; // Low probability
+  if (probability >= 0.1) return "bg-orange-100 hover:bg-orange-200 border-orange-300"; // Very low probability
+  return "bg-red-100 hover:bg-red-200 border-red-300"; // Extremely low probability
+};
+
+// Color key for reference
+const probabilityColorKey = [
+  { label: "90-100%", colorClass: "bg-green-100 border-green-300", probability: "Very High" },
+  { label: "70-89%", colorClass: "bg-teal-100 border-teal-300", probability: "High" },
+  { label: "50-69%", colorClass: "bg-blue-100 border-blue-300", probability: "Medium" },
+  { label: "30-49%", colorClass: "bg-yellow-100 border-yellow-300", probability: "Low" },
+  { label: "10-29%", colorClass: "bg-orange-100 border-orange-300", probability: "Very Low" },
+  { label: "0-9%", colorClass: "bg-red-100 border-red-300", probability: "Extremely Low" },
 ];
 
 export default function ResultsPanel({
@@ -83,6 +90,11 @@ export default function ResultsPanel({
   const closeProbabilityPanel = () => {
     setSelectedTokenIndex(null);
   };
+  
+  // Check if response has token probabilities
+  const hasTokenProbabilities = response && 
+    response.tokenProbabilities && 
+    response.tokenProbabilities.length > 0;
 
   return (
     <Card className="lg:w-1/2 p-6 shadow-sm min-h-[600px] flex flex-col">
@@ -144,16 +156,30 @@ export default function ResultsPanel({
         {/* Results View */}
         {response && !isLoading && (
           <div className="space-y-6">
+            {/* Probability Color Key */}
+            <div className="mb-4 p-3 border rounded-lg bg-muted/30">
+              <div className="text-sm font-medium mb-2">Token Probability Key:</div>
+              <div className="flex flex-wrap gap-2">
+                {probabilityColorKey.map((key, index) => (
+                  <div key={index} className="flex items-center gap-1.5">
+                    <div className={`w-4 h-4 rounded border ${key.colorClass}`}></div>
+                    <span className="text-xs">{key.label}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+            
             {/* Interactive Tokens Display */}
             <Card className="p-6">
               <div className="font-medium whitespace-pre-wrap leading-relaxed">
                 {response.tokenProbabilities.map((tokenData, index) => (
                   <span
                     key={index}
-                    className={`cursor-pointer rounded px-1 py-0.5 inline-block ${
-                      tokenColors[index % tokenColors.length]
+                    className={`cursor-pointer rounded px-1 py-0.5 inline-block border ${
+                      getTokenColorClass(tokenData.probability)
                     } ${selectedTokenIndex === index ? 'ring-2 ring-primary' : ''}`}
                     onClick={() => handleTokenClick(index)}
+                    title={`${(tokenData.probability * 100).toFixed(1)}% probability`}
                   >
                     {tokenData.token}
                   </span>
