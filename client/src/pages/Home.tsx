@@ -23,7 +23,7 @@ export default function Home() {
   const { toast } = useToast();
   
   // Application state
-  const [prompt, setPrompt] = useState<string>("Water, Tea or Coffee? Answer only in a single option of these");
+  const [prompt, setPrompt] = useState<string>("Enter a query here");
   const [model, setModel] = useState<string>("gpt-3.5-turbo");
   const [temperature, setTemperature] = useState<number>(0.7);
   const [maxTokens, setMaxTokens] = useState<number>(150);
