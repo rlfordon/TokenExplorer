@@ -1,11 +1,10 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useRef } from "react";
 import { Card } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
-import { ChevronLeft, ChevronRight, Clipboard, Clock, Tag } from "lucide-react";
+import { Clipboard, Clock, Tag, X } from "lucide-react";
 import { TokenProbability } from "@shared/schema";
 
 // Response type from the server
@@ -30,6 +29,19 @@ interface ResultsPanelProps {
   onAutoContinueToggle: (enabled: boolean) => void;
 }
 
+// Token colors for visual distinction
+const tokenColors = [
+  "bg-blue-100 hover:bg-blue-200",
+  "bg-green-100 hover:bg-green-200",
+  "bg-purple-100 hover:bg-purple-200",
+  "bg-yellow-100 hover:bg-yellow-200",
+  "bg-pink-100 hover:bg-pink-200",
+  "bg-teal-100 hover:bg-teal-200",
+  "bg-orange-100 hover:bg-orange-200",
+  "bg-indigo-100 hover:bg-indigo-200",
+  "bg-red-100 hover:bg-red-200",
+];
+
 export default function ResultsPanel({
   response,
   tokenViewEnabled,
@@ -39,16 +51,8 @@ export default function ResultsPanel({
   onAutoContinueToggle,
 }: ResultsPanelProps) {
   const { toast } = useToast();
-  const [currentTokenIndex, setCurrentTokenIndex] = useState(0);
-  const [tabValue, setTabValue] = useState<string>("token-view");
-  
-  // Refs
+  const [selectedTokenIndex, setSelectedTokenIndex] = useState<number | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-
-  // Auto set tab based on tokenViewEnabled
-  useEffect(() => {
-    setTabValue(tokenViewEnabled ? "token-view" : "text-view");
-  }, [tokenViewEnabled]);
 
   // Copy response to clipboard
   const copyResponseToClipboard = () => {
@@ -70,37 +74,21 @@ export default function ResultsPanel({
     }
   };
 
-  // Navigate between tokens
-  const goToPreviousToken = () => {
-    if (currentTokenIndex > 0) {
-      setCurrentTokenIndex(currentTokenIndex - 1);
-    }
+  // Handle token click
+  const handleTokenClick = (index: number) => {
+    setSelectedTokenIndex(index === selectedTokenIndex ? null : index);
   };
 
-  const goToNextToken = () => {
-    if (response && currentTokenIndex < response.tokenProbabilities.length - 1) {
-      setCurrentTokenIndex(currentTokenIndex + 1);
-    }
+  // Close probability panel
+  const closeProbabilityPanel = () => {
+    setSelectedTokenIndex(null);
   };
-
-  // Reset current token index when response changes
-  useEffect(() => {
-    setCurrentTokenIndex(0);
-  }, [response]);
 
   return (
     <Card className="lg:w-1/2 p-6 shadow-sm min-h-[600px] flex flex-col">
       {/* Results Controls */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2">
-            <Label htmlFor="toggleTokenView" className="text-sm font-medium">Token View</Label>
-            <Switch
-              id="toggleTokenView"
-              checked={tokenViewEnabled}
-              onCheckedChange={onTokenViewToggle}
-            />
-          </div>
           <div className="flex items-center gap-2">
             <Label htmlFor="toggleAutoContinue" className="text-sm font-medium">Automatic Continuation</Label>
             <Switch
@@ -140,7 +128,7 @@ export default function ResultsPanel({
               />
             </svg>
             <p className="text-center max-w-md px-6">
-              Enter a prompt on the left and click "Continue" to see the model's response and token probabilities.
+              Enter a prompt on the left and click "Generate" to see the model's response. Click on any token to see alternatives.
             </p>
           </div>
         )}
@@ -155,89 +143,85 @@ export default function ResultsPanel({
 
         {/* Results View */}
         {response && !isLoading && (
-          <Tabs
-            defaultValue="token-view"
-            value={tabValue}
-            onValueChange={(value) => {
-              setTabValue(value);
-              onTokenViewToggle(value === "token-view");
-            }}
-            className="w-full"
-          >
-            <TabsList className="mb-4">
-              <TabsTrigger value="token-view">Token Probabilities</TabsTrigger>
-              <TabsTrigger value="text-view">Plain Text</TabsTrigger>
-            </TabsList>
+          <div className="space-y-6">
+            {/* Interactive Tokens Display */}
+            <Card className="p-6">
+              <div className="font-medium whitespace-pre-wrap leading-relaxed">
+                {response.tokenProbabilities.map((tokenData, index) => (
+                  <span
+                    key={index}
+                    className={`cursor-pointer rounded px-1 py-0.5 inline-block ${
+                      tokenColors[index % tokenColors.length]
+                    } ${selectedTokenIndex === index ? 'ring-2 ring-primary' : ''}`}
+                    onClick={() => handleTokenClick(index)}
+                  >
+                    {tokenData.token}
+                  </span>
+                ))}
+              </div>
+            </Card>
             
-            <TabsContent value="token-view" className="space-y-6">
-              {response.tokenProbabilities.length > 0 && (
-                <Card>
-                  <div className="bg-muted p-4 border-b">
-                    <div className="flex items-center justify-between">
-                      <h3 className="font-medium">Response Token #{currentTokenIndex + 1}</h3>
-                      <div className="flex gap-2">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={goToPreviousToken}
-                          disabled={currentTokenIndex === 0}
-                        >
-                          <ChevronLeft className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={goToNextToken}
-                          disabled={currentTokenIndex === response.tokenProbabilities.length - 1}
-                        >
-                          <ChevronRight className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="p-4">
-                    <ul className="space-y-2">
-                      {(() => {
-                        const token = response.tokenProbabilities[currentTokenIndex];
+            {/* Token Probability Panel (Shows when a token is clicked) */}
+            {selectedTokenIndex !== null && response.tokenProbabilities[selectedTokenIndex] && (
+              <Card className="border-primary">
+                <div className="bg-muted p-4 border-b flex justify-between items-center">
+                  <h3 className="font-medium">
+                    Token Alternatives for "{response.tokenProbabilities[selectedTokenIndex].token}"
+                  </h3>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={closeProbabilityPanel}
+                    className="h-8 w-8"
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+                <div className="p-4">
+                  <ul className="space-y-2">
+                    {(() => {
+                      const token = response.tokenProbabilities[selectedTokenIndex];
+                      
+                      // Create array with all alternatives including the main token
+                      const allTokens = [
+                        { token: token.token, probability: token.probability },
+                        ...token.alternatives
+                      ].sort((a, b) => b.probability - a.probability);
+                      
+                      return allTokens.map((alt, index) => {
+                        const percentValue = (alt.probability * 100).toFixed(2);
+                        const isSelected = alt.token === token.token;
                         
-                        if (!token) return null;
-                        
-                        // Create array with all alternatives including the main token
-                        const allTokens = [
-                          { token: token.token, probability: token.probability },
-                          ...token.alternatives
-                        ].sort((a, b) => b.probability - a.probability);
-                        
-                        return allTokens.map((alt, index) => {
-                          const percentValue = (alt.probability * 100).toFixed(2);
-                          return (
-                            <li key={index} className="flex items-center gap-4">
-                              <div className="w-24 font-mono font-medium">{alt.token}</div>
-                              <div className="w-24 text-right text-sm text-muted-foreground">
-                                ({percentValue}%)
-                              </div>
-                              <div className="flex-grow h-6 bg-muted rounded-full overflow-hidden">
-                                <div
-                                  className="h-full bg-primary rounded-full"
-                                  style={{ width: `${percentValue}%` }}
-                                ></div>
-                              </div>
-                            </li>
-                          );
-                        });
-                      })()}
-                    </ul>
-                  </div>
-                </Card>
-              )}
-            </TabsContent>
-            
-            <TabsContent value="text-view">
-              <Card className="p-6">
-                <p className="whitespace-pre-wrap font-medium">{response.text}</p>
+                        return (
+                          <li 
+                            key={index} 
+                            className={`flex items-center gap-4 p-2 rounded ${
+                              isSelected ? 'bg-primary/10' : ''
+                            }`}
+                          >
+                            <div className="w-24 font-mono font-medium">
+                              {isSelected ? <strong>{alt.token}</strong> : alt.token}
+                            </div>
+                            <div className="w-24 text-right text-sm text-muted-foreground">
+                              ({percentValue}%)
+                            </div>
+                            <div className="flex-grow h-6 bg-muted rounded-full overflow-hidden">
+                              <div
+                                className={`h-full rounded-full ${
+                                  isSelected ? 'bg-primary' : 'bg-primary/50'
+                                }`}
+                                style={{ width: `${percentValue}%` }}
+                              ></div>
+                            </div>
+                          </li>
+                        );
+                      });
+                    })()}
+                  </ul>
+                </div>
               </Card>
-            </TabsContent>
-          </Tabs>
+            )}
+          </div>
         )}
       </div>
 
