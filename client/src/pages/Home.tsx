@@ -1,10 +1,8 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import InputPanel from "@/components/InputPanel";
 import ResultsPanel from "@/components/ResultsPanel";
-import ApiKeyModal from "@/components/ApiKeyModal";
-import { useLocalStorage } from "@/lib/hooks";
 import { apiRequest } from "@/lib/queryClient";
 import { OpenAIRequest, TokenProbability } from "@shared/schema";
 
@@ -23,8 +21,6 @@ type OpenAIResponse = {
 
 export default function Home() {
   const { toast } = useToast();
-  const [apiKey, setApiKey] = useLocalStorage<string>("openai_api_key", "");
-  const [showApiKeyModal, setShowApiKeyModal] = useState(false);
   
   // Application state
   const [prompt, setPrompt] = useState<string>("Water, Tea or Coffee? Answer only in a single option of these");
@@ -53,30 +49,8 @@ export default function Home() {
     },
   });
 
-  // Show API key modal if no key is stored
-  useEffect(() => {
-    if (!apiKey) {
-      setShowApiKeyModal(true);
-    }
-  }, [apiKey]);
-
-  // Handle API key save
-  const handleSaveApiKey = (key: string) => {
-    setApiKey(key);
-    setShowApiKeyModal(false);
-    toast({
-      title: "API Key Saved",
-      description: "Your API key has been saved in the browser's local storage.",
-    });
-  };
-
   // Handle form submission
   const handleSubmit = () => {
-    if (!apiKey) {
-      setShowApiKeyModal(true);
-      return;
-    }
-
     if (!prompt.trim()) {
       toast({
         title: "Error",
@@ -91,7 +65,7 @@ export default function Home() {
       model,
       temperature,
       maxTokens,
-      apiKey,
+      // apiKey is now optional and managed by the server
     });
   };
 
@@ -125,16 +99,10 @@ export default function Home() {
             </h1>
             <div className="flex gap-4">
               <button
-                onClick={() => setShowApiKeyModal(true)}
-                className="px-4 py-2 bg-primary text-white rounded-md hover:bg-opacity-90 transition-colors"
-              >
-                CONFIGURE LLM
-              </button>
-              <button
                 onClick={() => {
                   toast({
                     title: "LLM Explorer Help",
-                    description: "Explore token probabilities in OpenAI's language models. Enter your API key, type a prompt, and see not just the final response, but the probability of each token the model considered.",
+                    description: "Explore token probabilities in OpenAI's language models. Type a prompt, and see not just the final response, but the probability of each token the model considered.",
                   });
                 }}
                 className="px-4 py-2 border border-primary text-primary rounded-md hover:bg-primary hover:bg-opacity-10 transition-colors"
@@ -148,7 +116,6 @@ export default function Home() {
         {/* Main Content */}
         <main className="flex flex-col lg:flex-row gap-8">
           <InputPanel
-            apiKey={apiKey}
             prompt={prompt}
             model={model}
             temperature={temperature}
@@ -158,8 +125,6 @@ export default function Home() {
             onModelChange={setModel}
             onTemperatureChange={setTemperature}
             onMaxTokensChange={setMaxTokens}
-            onShowApiKeyModal={() => setShowApiKeyModal(true)}
-            onSaveApiKey={handleSaveApiKey}
             onSubmit={handleSubmit}
             onClearResponse={handleClearResponse}
           />
@@ -173,14 +138,6 @@ export default function Home() {
             onAutoContinueToggle={setAutoContinueEnabled}
           />
         </main>
-
-        {/* API Key Modal */}
-        <ApiKeyModal
-          isOpen={showApiKeyModal}
-          onClose={() => setShowApiKeyModal(false)}
-          onSave={handleSaveApiKey}
-          currentApiKey={apiKey}
-        />
       </div>
     </div>
   );
