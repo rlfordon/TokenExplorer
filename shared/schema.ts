@@ -39,7 +39,7 @@ export const openaiRequestSchema = z.object({
   model: z.string().default("gpt-3.5-turbo"),
   temperature: z.number().min(0).max(2).default(0.7),
   maxTokens: z.number().min(1).max(4096).default(150),
-  apiKey: z.string().min(1, "API key is required"),
+  apiKey: z.string().optional(), // Now optional as we'll use the server's API key
 });
 
 export const tokenProbabilitySchema = z.object({

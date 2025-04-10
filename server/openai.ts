@@ -7,11 +7,13 @@ export async function getCompletionWithProbabilities({
   model,
   temperature,
   maxTokens,
-  apiKey,
+  apiKey, // This is now optional
 }: OpenAIRequest) {
   try {
-    // Initialize OpenAI client with user's API key
-    const openai = new OpenAI({ apiKey });
+    // Initialize OpenAI client with environment variable API key, falling back to user provided key if it exists
+    const openai = new OpenAI({ 
+      apiKey: process.env.OPENAI_API_KEY || apiKey 
+    });
     
     // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
     // Use gpt-4o if gpt-4 variants are selected
