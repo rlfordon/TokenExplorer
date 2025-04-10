@@ -97,23 +97,24 @@ export default function ResultsPanel({
     response.tokenProbabilities.length > 0;
 
   return (
-    <Card className="lg:w-1/2 p-6 shadow-sm min-h-[600px] flex flex-col">
+    <Card className="lg:w-[65%] p-4 shadow-sm min-h-[500px] flex flex-col">
       {/* Results Controls */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2">
-            <Label htmlFor="toggleAutoContinue" className="text-sm font-medium">Automatic Continuation</Label>
+            <Label htmlFor="toggleAutoContinue" className="text-xs font-medium">Auto Continue</Label>
             <Switch
               id="toggleAutoContinue"
               checked={autoContinueEnabled}
               onCheckedChange={onAutoContinueToggle}
+              className="scale-75 origin-left"
             />
           </div>
         </div>
         <div>
           {response && (
-            <div className="flex flex-col items-end">
-              <span className="text-xs text-muted-foreground">Max Tokens</span>
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <span>Completion Tokens:</span>
               <span className="font-mono font-medium">{response.usage.completionTokens}</span>
             </div>
           )}
@@ -157,27 +158,27 @@ export default function ResultsPanel({
         {response && !isLoading && (
           <div className="space-y-6">
             {/* Probability Color Key */}
-            <div className="mb-4 p-3 border rounded-lg bg-muted/30">
-              <div className="text-sm font-medium mb-2">Token Probability Key:</div>
-              <div className="flex flex-wrap gap-2">
+            <div className="mb-3 p-2 border rounded-lg bg-muted/30">
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
+                <div className="text-xs font-medium mr-1">Probability:</div>
                 {probabilityColorKey.map((key, index) => (
-                  <div key={index} className="flex items-center gap-1.5">
-                    <div className={`w-4 h-4 rounded border ${key.colorClass}`}></div>
-                    <span className="text-xs">{key.label}</span>
+                  <div key={index} className="flex items-center gap-1">
+                    <div className={`w-3 h-3 rounded border ${key.colorClass}`}></div>
+                    <span className="text-[10px]">{key.label}</span>
                   </div>
                 ))}
               </div>
             </div>
             
             {/* Interactive Tokens Display */}
-            <Card className="p-6">
+            <Card className="p-4">
               <div className="font-medium whitespace-pre-wrap leading-relaxed">
                 {response.tokenProbabilities.map((tokenData, index) => (
                   <span
                     key={index}
-                    className={`cursor-pointer rounded px-1 py-0.5 inline-block border ${
+                    className={`cursor-pointer rounded px-0.5 py-0.5 inline-block border ${
                       getTokenColorClass(tokenData.probability)
-                    } ${selectedTokenIndex === index ? 'ring-2 ring-primary' : ''}`}
+                    } ${selectedTokenIndex === index ? 'ring-1 ring-primary' : ''}`}
                     onClick={() => handleTokenClick(index)}
                     title={`${(tokenData.probability * 100).toFixed(1)}% probability`}
                   >
@@ -190,21 +191,21 @@ export default function ResultsPanel({
             {/* Token Probability Panel (Shows when a token is clicked) */}
             {selectedTokenIndex !== null && response.tokenProbabilities[selectedTokenIndex] && (
               <Card className="border-primary">
-                <div className="bg-muted p-4 border-b flex justify-between items-center">
-                  <h3 className="font-medium">
-                    Token Alternatives for "{response.tokenProbabilities[selectedTokenIndex].token}"
+                <div className="bg-muted p-2 border-b flex justify-between items-center">
+                  <h3 className="text-sm font-medium">
+                    Alternatives for "{response.tokenProbabilities[selectedTokenIndex].token}"
                   </h3>
                   <Button
                     variant="ghost"
                     size="icon"
                     onClick={closeProbabilityPanel}
-                    className="h-8 w-8"
+                    className="h-6 w-6"
                   >
-                    <X className="h-4 w-4" />
+                    <X className="h-3 w-3" />
                   </Button>
                 </div>
-                <div className="p-4">
-                  <ul className="space-y-2">
+                <div className="p-3">
+                  <ul className="space-y-1">
                     {(() => {
                       const token = response.tokenProbabilities[selectedTokenIndex];
                       
@@ -214,24 +215,27 @@ export default function ResultsPanel({
                         ...token.alternatives
                       ].sort((a, b) => b.probability - a.probability);
                       
-                      return allTokens.map((alt, index) => {
-                        const percentValue = (alt.probability * 100).toFixed(2);
+                      // Only show top 5 alternatives for compactness
+                      const topTokens = allTokens.slice(0, 6);
+                      
+                      return topTokens.map((alt, index) => {
+                        const percentValue = (alt.probability * 100).toFixed(1);
                         const isSelected = alt.token === token.token;
                         
                         return (
                           <li 
                             key={index} 
-                            className={`flex items-center gap-4 p-2 rounded ${
+                            className={`flex items-center gap-3 p-1 rounded text-sm ${
                               isSelected ? 'bg-primary/10' : ''
                             }`}
                           >
-                            <div className="w-24 font-mono font-medium">
+                            <div className="w-16 font-mono font-medium truncate">
                               {isSelected ? <strong>{alt.token}</strong> : alt.token}
                             </div>
-                            <div className="w-24 text-right text-sm text-muted-foreground">
-                              ({percentValue}%)
+                            <div className="w-14 text-right text-xs text-muted-foreground">
+                              {percentValue}%
                             </div>
-                            <div className="flex-grow h-6 bg-muted rounded-full overflow-hidden">
+                            <div className="flex-grow h-4 bg-muted rounded-full overflow-hidden">
                               <div
                                 className={`h-full rounded-full ${
                                   isSelected ? 'bg-primary' : 'bg-primary/50'
@@ -253,27 +257,27 @@ export default function ResultsPanel({
 
       {/* Bottom Controls */}
       {response && (
-        <div className="flex justify-between mt-6 pt-4 border-t border-muted text-sm">
+        <div className="flex justify-between mt-4 pt-2 border-t border-muted text-xs">
           <Button
             variant="ghost"
             size="sm"
-            className="text-muted-foreground hover:text-primary"
+            className="text-muted-foreground hover:text-primary text-xs py-1 h-auto"
             onClick={copyResponseToClipboard}
           >
-            <Clipboard className="mr-1 h-4 w-4" />
-            Copy Response
+            <Clipboard className="mr-1 h-3 w-3" />
+            Copy
           </Button>
-          <div className="flex gap-6">
+          <div className="flex gap-3">
             <div className="flex items-center gap-1">
-              <Clock className="h-4 w-4 text-muted-foreground" />
+              <Clock className="h-3 w-3 text-muted-foreground" />
               <span className="text-muted-foreground">
-                Response time: <span className="font-medium">{response.responseTime}s</span>
+                {response.responseTime}s
               </span>
             </div>
             <div className="flex items-center gap-1">
-              <Tag className="h-4 w-4 text-muted-foreground" />
+              <Tag className="h-3 w-3 text-muted-foreground" />
               <span className="text-muted-foreground">
-                Tokens used: <span className="font-medium">{response.usage.totalTokens}</span>
+                {response.usage.totalTokens} tokens
               </span>
             </div>
           </div>

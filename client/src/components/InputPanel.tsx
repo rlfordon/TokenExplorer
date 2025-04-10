@@ -52,10 +52,10 @@ export default function InputPanel({
   };
 
   return (
-    <Card className="flex-1 p-6 max-w-full lg:max-w-[40%]">
-      <div className="mb-4 flex justify-between items-center">
-        <h2 className="text-xl font-semibold">Input</h2>
-        <div className="text-sm text-gray-500">
+    <Card className="flex-1 p-4 max-w-full lg:max-w-[35%]">
+      <div className="mb-2 flex justify-between items-center">
+        <h2 className="text-lg font-semibold">Input</h2>
+        <div className="text-xs text-gray-500">
           Est. tokens: {tokenCount}
         </div>
       </div>
@@ -70,70 +70,76 @@ export default function InputPanel({
           value={prompt}
           onChange={(e) => handlePromptChange(e.target.value)}
           placeholder="Enter your prompt here..."
-          className="min-h-[120px] resize-y"
+          className="min-h-[80px] resize-y"
           disabled={isPending}
         />
       </div>
 
-      {/* Model selection */}
-      <div className="mb-4">
-        <Label htmlFor="model" className="block mb-2">
-          Model
-        </Label>
-        <Select
-          value={model}
-          onValueChange={onModelChange}
-          disabled={isPending}
-        >
-          <SelectTrigger>
-            <SelectValue placeholder="Select a model" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="gpt-3.5-turbo">GPT-3.5 Turbo</SelectItem>
-            <SelectItem value="gpt-4">GPT-4 (uses GPT-4o)</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
+      {/* Compact Controls Row */}
+      <div className="mb-6 border rounded-lg p-3 bg-muted/10">
+        <Label className="text-sm font-medium mb-2 block">Model Settings</Label>
+        <div className="grid grid-cols-12 gap-3">
+          {/* Model selection */}
+          <div className="col-span-4">
+            <div className="text-xs text-muted-foreground mb-1">Model</div>
+            <Select
+              value={model}
+              onValueChange={onModelChange}
+              disabled={isPending}
+            >
+              <SelectTrigger className="h-8 text-xs">
+                <SelectValue placeholder="Select a model" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="gpt-3.5-turbo">GPT-3.5 Turbo</SelectItem>
+                <SelectItem value="gpt-4">GPT-4 (uses GPT-4o)</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
 
-      {/* Temperature slider */}
-      <div className="mb-4">
-        <div className="flex justify-between mb-2">
-          <Label htmlFor="temperature">Temperature</Label>
-          <span className="text-sm text-muted-foreground">{temperature}</span>
-        </div>
-        <Slider
-          id="temperature"
-          min={0}
-          max={2}
-          step={0.1}
-          value={[temperature]}
-          onValueChange={(values) => onTemperatureChange(values[0])}
-          disabled={isPending}
-        />
-        <div className="flex justify-between text-xs text-muted-foreground mt-1">
-          <span>Deterministic</span>
-          <span>Creative</span>
-        </div>
-      </div>
+          {/* Temperature slider */}
+          <div className="col-span-4">
+            <div className="flex justify-between mb-1">
+              <span className="text-xs text-muted-foreground">Temperature</span>
+              <span className="text-xs font-medium">{temperature}</span>
+            </div>
+            <Slider
+              id="temperature"
+              min={0}
+              max={2}
+              step={0.1}
+              value={[temperature]}
+              onValueChange={(values) => onTemperatureChange(values[0])}
+              disabled={isPending}
+              className="py-1"
+            />
+            <div className="flex justify-between text-[10px] text-muted-foreground">
+              <span>Deterministic</span>
+              <span>Creative</span>
+            </div>
+          </div>
 
-      {/* Max tokens slider */}
-      <div className="mb-6">
-        <div className="flex justify-between mb-2">
-          <Label htmlFor="maxTokens">Max Tokens</Label>
-          <span className="text-sm text-muted-foreground">{maxTokens}</span>
-        </div>
-        <Slider
-          id="maxTokens"
-          min={1}
-          max={2048}
-          step={1}
-          value={[maxTokens]}
-          onValueChange={(values) => onMaxTokensChange(values[0])}
-          disabled={isPending}
-        />
-        <div className="flex justify-between text-xs text-muted-foreground mt-1">
-          <span>Short</span>
-          <span>Long</span>
+          {/* Max tokens slider */}
+          <div className="col-span-4">
+            <div className="flex justify-between mb-1">
+              <span className="text-xs text-muted-foreground">Max Tokens</span>
+              <span className="text-xs font-medium">{maxTokens}</span>
+            </div>
+            <Slider
+              id="maxTokens"
+              min={1}
+              max={2048}
+              step={1}
+              value={[maxTokens]}
+              onValueChange={(values) => onMaxTokensChange(values[0])}
+              disabled={isPending}
+              className="py-1"
+            />
+            <div className="flex justify-between text-[10px] text-muted-foreground">
+              <span>Short</span>
+              <span>Long</span>
+            </div>
+          </div>
         </div>
       </div>
 
