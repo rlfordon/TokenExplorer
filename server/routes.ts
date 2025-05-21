@@ -23,7 +23,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Return the result
       res.json(result);
-    } catch (error) {
+    } catch (error: unknown) {
       // Handle errors
       if (error instanceof z.ZodError) {
         return res.status(400).json({ 
@@ -35,16 +35,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.error("OpenAI API error:", error);
       
       // Check if it's an OpenAI API error
-      if (error.response && error.response.status) {
-        return res.status(error.response.status).json({
-          message: error.message || "Error from OpenAI API",
-          details: error.response.data
-        });
+      if (typeof error === 'object' && error !== null && 'response' in error) {
+        const apiError = error as any; // Type assertion for error with response
+        if (apiError.response && apiError.response.status) {
+          return res.status(apiError.response.status).json({
+            message: apiError.message || "Error from OpenAI API",
+            details: apiError.response.data
+          });
+        }
       }
       
       // General error
+      const errorMessage = error instanceof Error ? error.message : "Unknown error";
       res.status(500).json({ 
-        message: error.message || "Internal server error" 
+        message: errorMessage || "Internal server error" 
       });
     }
   });
@@ -76,10 +80,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
           message: "Invalid passkey" 
         });
       }
-    } catch (error) {
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : "Unknown error";
       res.status(500).json({ 
         success: false, 
-        message: "Server error during authentication" 
+        message: `Server error during authentication: ${errorMessage}` 
       });
     }
   });
