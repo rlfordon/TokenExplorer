@@ -32,7 +32,7 @@ export default function Home() {
   const [passkey, setPasskey] = useState<string>("");
   
   // Application state
-  const [prompt, setPrompt] = useState<string>("Enter a query here");
+  const [prompt, setPrompt] = useState<string>("");
   const [model, setModel] = useState<string>("gpt-3.5-turbo");
   const [temperature, setTemperature] = useState<number>(0.7);
   const [maxTokens, setMaxTokens] = useState<number>(150);

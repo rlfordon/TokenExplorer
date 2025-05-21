@@ -69,7 +69,7 @@ export default function InputPanel({
           id="prompt"
           value={prompt}
           onChange={(e) => handlePromptChange(e.target.value)}
-          placeholder="Enter your prompt here..."
+          placeholder="Enter a query here"
           className="min-h-[80px] resize-y"
           disabled={isPending}
         />
