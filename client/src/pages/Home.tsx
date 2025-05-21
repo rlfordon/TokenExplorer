@@ -1,10 +1,14 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import InputPanel from "@/components/InputPanel";
 import ResultsPanel from "@/components/ResultsPanel";
 import { apiRequest } from "@/lib/queryClient";
 import { OpenAIRequest, TokenProbability } from "@shared/schema";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 
 // Response type from the server
 type OpenAIResponse = {
@@ -21,6 +25,10 @@ type OpenAIResponse = {
 
 export default function Home() {
   const { toast } = useToast();
+  
+  // Authentication state
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
+  const [passkey, setPasskey] = useState<string>("");
   
   // Application state
   const [prompt, setPrompt] = useState<string>("Enter a query here");
@@ -74,6 +82,45 @@ export default function Home() {
     setResponse(null);
   };
 
+  // Handle passkey authentication
+  const handleAuthenticate = (e: React.FormEvent) => {
+    e.preventDefault();
+    // For simplicity, the passkey is hardcoded as "explorer123"
+    // In a real application, this should be stored securely and verified on the server
+    if (passkey === "explorer123") {
+      setIsAuthenticated(true);
+      localStorage.setItem("token-explorer-auth", "true"); // Store auth state
+      toast({
+        title: "Success",
+        description: "Welcome to the LLM Token Explorer!",
+      });
+    } else {
+      toast({
+        title: "Authentication Failed",
+        description: "Incorrect passkey. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Check for existing auth on component mount
+  useEffect(() => {
+    const isAuth = localStorage.getItem("token-explorer-auth") === "true";
+    if (isAuth) {
+      setIsAuthenticated(true);
+    }
+  }, []);
+
+  // Logout function
+  const handleLogout = () => {
+    setIsAuthenticated(false);
+    localStorage.removeItem("token-explorer-auth");
+    toast({
+      title: "Logged Out",
+      description: "You have been logged out successfully.",
+    });
+  };
+
   return (
     <div className="bg-gray-50 min-h-screen font-sans text-dark">
       <div className="container mx-auto px-4 py-8 max-w-7xl">
@@ -98,46 +145,91 @@ export default function Home() {
               LLM Explorer
             </h1>
             <div className="flex gap-4">
-              <button
-                onClick={() => {
-                  toast({
-                    title: "LLM Explorer Help",
-                    description: "Explore token probabilities in OpenAI's language models. Type a prompt, and see not just the final response, but the probability of each token the model considered.",
-                  });
-                }}
-                className="px-4 py-2 border border-primary text-primary rounded-md hover:bg-primary hover:bg-opacity-10 transition-colors"
-              >
-                HELP
-              </button>
+              {isAuthenticated && (
+                <>
+                  <button
+                    onClick={() => {
+                      toast({
+                        title: "LLM Explorer Help",
+                        description: "Explore token probabilities in OpenAI's language models. Type a prompt, and see not just the final response, but the probability of each token the model considered.",
+                      });
+                    }}
+                    className="px-4 py-2 border border-primary text-primary rounded-md hover:bg-primary hover:bg-opacity-10 transition-colors"
+                  >
+                    HELP
+                  </button>
+                  <button
+                    onClick={handleLogout}
+                    className="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 transition-colors"
+                  >
+                    LOGOUT
+                  </button>
+                </>
+              )}
             </div>
           </div>
         </header>
 
-        {/* Main Content */}
-        <main className="flex flex-col lg:flex-row gap-8">
-          <InputPanel
-            prompt={prompt}
-            model={model}
-            temperature={temperature}
-            maxTokens={maxTokens}
-            isPending={mutation.isPending}
-            onPromptChange={setPrompt}
-            onModelChange={setModel}
-            onTemperatureChange={setTemperature}
-            onMaxTokensChange={setMaxTokens}
-            onSubmit={handleSubmit}
-            onClearResponse={handleClearResponse}
-          />
+        {/* Passkey Authentication Screen */}
+        {!isAuthenticated ? (
+          <div className="flex justify-center items-center min-h-[70vh]">
+            <Card className="w-full max-w-md p-6">
+              <CardHeader>
+                <CardTitle className="text-center text-2xl">Access Required</CardTitle>
+                <CardDescription className="text-center">
+                  Please enter the passkey to access the LLM Token Explorer
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <form onSubmit={handleAuthenticate} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="passkey">Passkey</Label>
+                    <Input
+                      id="passkey"
+                      type="password"
+                      placeholder="Enter your passkey"
+                      value={passkey}
+                      onChange={(e) => setPasskey(e.target.value)}
+                      autoFocus
+                    />
+                  </div>
+                  <Button
+                    type="submit" 
+                    className="w-full"
+                  >
+                    Enter Explorer
+                  </Button>
+                </form>
+              </CardContent>
+            </Card>
+          </div>
+        ) : (
+          /* Main Content - Only shown when authenticated */
+          <main className="flex flex-col lg:flex-row gap-8">
+            <InputPanel
+              prompt={prompt}
+              model={model}
+              temperature={temperature}
+              maxTokens={maxTokens}
+              isPending={mutation.isPending}
+              onPromptChange={setPrompt}
+              onModelChange={setModel}
+              onTemperatureChange={setTemperature}
+              onMaxTokensChange={setMaxTokens}
+              onSubmit={handleSubmit}
+              onClearResponse={handleClearResponse}
+            />
 
-          <ResultsPanel
-            response={response}
-            tokenViewEnabled={tokenViewEnabled}
-            autoContinueEnabled={autoContinueEnabled}
-            isLoading={mutation.isPending}
-            onTokenViewToggle={setTokenViewEnabled}
-            onAutoContinueToggle={setAutoContinueEnabled}
-          />
-        </main>
+            <ResultsPanel
+              response={response}
+              tokenViewEnabled={tokenViewEnabled}
+              autoContinueEnabled={autoContinueEnabled}
+              isLoading={mutation.isPending}
+              onTokenViewToggle={setTokenViewEnabled}
+              onAutoContinueToggle={setAutoContinueEnabled}
+            />
+          </main>
+        )}
       </div>
     </div>
   );
