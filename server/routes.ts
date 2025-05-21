@@ -53,6 +53,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/health", (_req, res) => {
     res.json({ status: "ok" });
   });
+  
+  // Passkey verification endpoint
+  app.post("/api/verify-passkey", (req, res) => {
+    try {
+      const { passkey } = req.body;
+      const correctPasskey = process.env.EXPLORER_PASSKEY;
+      
+      if (!correctPasskey) {
+        return res.status(500).json({ 
+          error: "Server configuration error: No passkey configured" 
+        });
+      }
+      
+      const isValid = passkey === correctPasskey;
+      
+      if (isValid) {
+        return res.json({ success: true });
+      } else {
+        return res.status(401).json({ 
+          success: false, 
+          message: "Invalid passkey" 
+        });
+      }
+    } catch (error) {
+      res.status(500).json({ 
+        success: false, 
+        message: "Server error during authentication" 
+      });
+    }
+  });
 
   const httpServer = createServer(app);
   return httpServer;

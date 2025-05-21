@@ -4,6 +4,7 @@ import { useToast } from "@/hooks/use-toast";
 import InputPanel from "@/components/InputPanel";
 import ResultsPanel from "@/components/ResultsPanel";
 import { apiRequest } from "@/lib/queryClient";
+import { verifyPasskey } from "@/lib/api";
 import { OpenAIRequest, TokenProbability } from "@shared/schema";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
@@ -83,21 +84,24 @@ export default function Home() {
   };
 
   // Handle passkey authentication
-  const handleAuthenticate = (e: React.FormEvent) => {
+  const handleAuthenticate = async (e: React.FormEvent) => {
     e.preventDefault();
-    // For simplicity, the passkey is hardcoded as "explorer123"
-    // In a real application, this should be stored securely and verified on the server
-    if (passkey === "explorer123") {
+    
+    try {
+      // Use server-side verification instead of hardcoded value
+      await verifyPasskey(passkey);
+      
+      // If verification successful, set authenticated state
       setIsAuthenticated(true);
       localStorage.setItem("token-explorer-auth", "true"); // Store auth state
       toast({
         title: "Success",
         description: "Welcome to the LLM Token Explorer!",
       });
-    } else {
+    } catch (error) {
       toast({
         title: "Authentication Failed",
-        description: "Incorrect passkey. Please try again.",
+        description: error instanceof Error ? error.message : "Incorrect passkey. Please try again.",
         variant: "destructive",
       });
     }
