@@ -80,25 +80,20 @@ export default function InputPanel({
         <Label className="text-sm font-medium mb-2 block">Model Settings</Label>
         <div className="grid grid-cols-12 gap-3">
           {/* Model selection */}
-          <div className="col-span-4">
+          <div className="col-span-5">
             <div className="text-xs text-muted-foreground mb-1">Model</div>
             <Select
               value={model}
               onValueChange={onModelChange}
               disabled={isPending}
             >
-              <SelectTrigger className="h-8 text-xs">
+              <SelectTrigger className="h-8 text-xs w-full">
                 <SelectValue placeholder="Select a model" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="gpt-4o">GPT-4o</SelectItem>
                 <SelectItem value="gpt-4o-mini">GPT-4o Mini</SelectItem>
-                <SelectItem value="gpt-4.1">GPT-4.1</SelectItem>
-                <SelectItem value="gpt-4.1-mini">GPT-4.1 Mini</SelectItem>
-                <SelectItem value="gpt-4.1-nano">GPT-4.1 Nano</SelectItem>
-                <SelectItem value="gpt-5">GPT-5</SelectItem>
-                <SelectItem value="gpt-5-mini">GPT-5 Mini</SelectItem>
-                <SelectItem value="gpt-3.5-turbo">GPT-3.5 Turbo (Legacy)</SelectItem>
+                <SelectItem value="gpt-3.5-turbo">GPT-3.5 Turbo</SelectItem>
               </SelectContent>
             </Select>
           </div>
