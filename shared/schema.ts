@@ -36,7 +36,7 @@ export const insertResponseSchema = createInsertSchema(openaiResponses).omit({
 // Types for API requests/responses
 export const openaiRequestSchema = z.object({
   prompt: z.string().min(1, "Prompt is required"),
-  model: z.string().default("gpt-3.5-turbo"),
+  model: z.string().default("gpt-4o"),
   temperature: z.number().min(0).max(2).default(0.7),
   maxTokens: z.number().min(1).max(4096).default(150),
   apiKey: z.string().optional(), // Now optional as we'll use the server's API key

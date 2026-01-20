@@ -91,8 +91,14 @@ export default function InputPanel({
                 <SelectValue placeholder="Select a model" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="gpt-3.5-turbo">GPT-3.5 Turbo</SelectItem>
-                <SelectItem value="gpt-4">GPT-4 (uses GPT-4o)</SelectItem>
+                <SelectItem value="gpt-4o">GPT-4o</SelectItem>
+                <SelectItem value="gpt-4o-mini">GPT-4o Mini</SelectItem>
+                <SelectItem value="gpt-4.1">GPT-4.1</SelectItem>
+                <SelectItem value="gpt-4.1-mini">GPT-4.1 Mini</SelectItem>
+                <SelectItem value="gpt-4.1-nano">GPT-4.1 Nano</SelectItem>
+                <SelectItem value="gpt-5">GPT-5</SelectItem>
+                <SelectItem value="gpt-5-mini">GPT-5 Mini</SelectItem>
+                <SelectItem value="gpt-3.5-turbo">GPT-3.5 Turbo (Legacy)</SelectItem>
               </SelectContent>
             </Select>
           </div>

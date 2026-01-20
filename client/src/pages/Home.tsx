@@ -33,7 +33,7 @@ export default function Home() {
   
   // Application state
   const [prompt, setPrompt] = useState<string>("");
-  const [model, setModel] = useState<string>("gpt-3.5-turbo");
+  const [model, setModel] = useState<string>("gpt-4o");
   const [temperature, setTemperature] = useState<number>(0.7);
   const [maxTokens, setMaxTokens] = useState<number>(150);
   const [tokenViewEnabled, setTokenViewEnabled] = useState<boolean>(true);
