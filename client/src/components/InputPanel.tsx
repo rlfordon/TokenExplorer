@@ -78,17 +78,17 @@ export default function InputPanel({
       {/* Compact Controls Row */}
       <div className="mb-6 border rounded-lg p-3 bg-muted/10">
         <Label className="text-sm font-medium mb-2 block">Model Settings</Label>
-        <div className="grid grid-cols-12 gap-3">
+        <div className="flex gap-4">
           {/* Model selection */}
-          <div className="col-span-5">
+          <div className="w-32 flex-shrink-0">
             <div className="text-xs text-muted-foreground mb-1">Model</div>
             <Select
               value={model}
               onValueChange={onModelChange}
               disabled={isPending}
             >
-              <SelectTrigger className="h-8 text-xs w-full">
-                <SelectValue placeholder="Select a model" />
+              <SelectTrigger className="h-8 text-xs">
+                <SelectValue placeholder="Model" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="gpt-4o">GPT-4o</SelectItem>
@@ -99,9 +99,9 @@ export default function InputPanel({
           </div>
 
           {/* Temperature slider */}
-          <div className="col-span-4">
+          <div className="flex-1 min-w-0">
             <div className="flex justify-between mb-1">
-              <span className="text-xs text-muted-foreground">Temperature</span>
+              <span className="text-xs text-muted-foreground">Temp</span>
               <span className="text-xs font-medium">{temperature}</span>
             </div>
             <Slider
@@ -114,14 +114,10 @@ export default function InputPanel({
               disabled={isPending}
               className="py-1"
             />
-            <div className="flex justify-between text-[10px] text-muted-foreground">
-              <span>Deterministic</span>
-              <span>Creative</span>
-            </div>
           </div>
 
           {/* Max tokens slider */}
-          <div className="col-span-4">
+          <div className="flex-1 min-w-0">
             <div className="flex justify-between mb-1">
               <span className="text-xs text-muted-foreground">Max Tokens</span>
               <span className="text-xs font-medium">{maxTokens}</span>
@@ -136,10 +132,6 @@ export default function InputPanel({
               disabled={isPending}
               className="py-1"
             />
-            <div className="flex justify-between text-[10px] text-muted-foreground">
-              <span>Short</span>
-              <span>Long</span>
-            </div>
           </div>
         </div>
       </div>
