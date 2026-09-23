@@ -5,23 +5,10 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { Clipboard, Clock, Tag, X } from "lucide-react";
-import { TokenProbability } from "@shared/schema";
-
-// Response type from the server
-type OpenAIResponse = {
-  text: string;
-  tokenProbabilities: TokenProbability[];
-  usage: {
-    promptTokens: number;
-    completionTokens: number;
-    totalTokens: number;
-  };
-  responseTime: string;
-  model: string;
-};
+import type { GenerateResponse } from "@/lib/types";
 
 interface ResultsPanelProps {
-  response: OpenAIResponse | null;
+  response: GenerateResponse | null;
   tokenViewEnabled: boolean;
   autoContinueEnabled: boolean;
   isLoading: boolean;

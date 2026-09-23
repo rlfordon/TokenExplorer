@@ -3,56 +3,46 @@ import { useMutation } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import InputPanel from "@/components/InputPanel";
 import ResultsPanel from "@/components/ResultsPanel";
-import { apiRequest } from "@/lib/queryClient";
-import { verifyPasskey } from "@/lib/api";
-import { OpenAIRequest, TokenProbability } from "@shared/schema";
+import { checkHealth, generate, getStoredPasskey, storePasskey, verifyPasskey } from "@/lib/api";
+import { DEFAULT_MODEL } from "@/lib/config";
+import type { GenerateRequest, GenerateResponse } from "@/lib/types";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 
-// Response type from the server
-type OpenAIResponse = {
-  text: string;
-  tokenProbabilities: TokenProbability[];
-  usage: {
-    promptTokens: number;
-    completionTokens: number;
-    totalTokens: number;
-  };
-  responseTime: string;
-  model: string;
-};
-
 export default function Home() {
   const { toast } = useToast();
   
-  // Authentication state
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
+  // Authentication state. "checking" until the proxy says whether a class passkey is required.
+  const [authState, setAuthState] = useState<"checking" | "needsPasskey" | "ready" | "unreachable">("checking");
+  const [passkeyRequired, setPasskeyRequired] = useState<boolean>(false);
+  const isAuthenticated = authState === "ready";
   const [passkey, setPasskey] = useState<string>("");
   
   // Application state
   const [prompt, setPrompt] = useState<string>("");
-  const [model, setModel] = useState<string>("gpt-4o");
+  const [model, setModel] = useState<string>(DEFAULT_MODEL);
   const [temperature, setTemperature] = useState<number>(0.7);
   const [maxTokens, setMaxTokens] = useState<number>(150);
   const [tokenViewEnabled, setTokenViewEnabled] = useState<boolean>(true);
   const [autoContinueEnabled, setAutoContinueEnabled] = useState<boolean>(true);
-  const [response, setResponse] = useState<OpenAIResponse | null>(null);
+  const [response, setResponse] = useState<GenerateResponse | null>(null);
 
   // API mutation
   const mutation = useMutation({
-    mutationFn: async (data: OpenAIRequest) => {
-      const res = await apiRequest("POST", "/api/openai", data);
-      return res.json() as Promise<OpenAIResponse>;
-    },
+    mutationFn: generate,
     onSuccess: (data) => {
       setResponse(data);
     },
     onError: (error: Error) => {
+      if (/passkey/i.test(error.message)) {
+        storePasskey(null);
+        setAuthState("needsPasskey");
+      }
       toast({
         title: "API Error",
-        description: error.message || "Failed to get response from OpenAI",
+        description: error.message || "Failed to get a response from the model",
         variant: "destructive",
       });
     },
@@ -69,13 +59,8 @@ export default function Home() {
       return;
     }
 
-    mutation.mutate({
-      prompt,
-      model,
-      temperature,
-      maxTokens,
-      // apiKey is now optional and managed by the server
-    });
+    const request: GenerateRequest = { prompt, model, temperature, maxTokens };
+    mutation.mutate(request);
   };
 
   // Clear response
@@ -88,12 +73,9 @@ export default function Home() {
     e.preventDefault();
     
     try {
-      // Use server-side verification instead of hardcoded value
       await verifyPasskey(passkey);
-      
-      // If verification successful, set authenticated state
-      setIsAuthenticated(true);
-      localStorage.setItem("token-explorer-auth", "true"); // Store auth state
+      storePasskey(passkey);
+      setAuthState("ready");
       toast({
         title: "Success",
         description: "Welcome to the LLM Token Explorer!",
@@ -107,18 +89,33 @@ export default function Home() {
     }
   };
 
-  // Check for existing auth on component mount
+  // On load, ask the proxy whether a passkey is required, and try any saved passkey.
   useEffect(() => {
-    const isAuth = localStorage.getItem("token-explorer-auth") === "true";
-    if (isAuth) {
-      setIsAuthenticated(true);
-    }
+    (async () => {
+      try {
+        const { passkeyRequired } = await checkHealth();
+        setPasskeyRequired(passkeyRequired);
+        if (!passkeyRequired) return setAuthState("ready");
+        const saved = getStoredPasskey();
+        if (saved) {
+          try {
+            await verifyPasskey(saved);
+            return setAuthState("ready");
+          } catch {
+            storePasskey(null);
+          }
+        }
+        setAuthState("needsPasskey");
+      } catch {
+        setAuthState("unreachable");
+      }
+    })();
   }, []);
 
   // Logout function
   const handleLogout = () => {
-    setIsAuthenticated(false);
-    localStorage.removeItem("token-explorer-auth");
+    setAuthState("needsPasskey");
+    storePasskey(null);
     toast({
       title: "Logged Out",
       description: "You have been logged out successfully.",
@@ -155,19 +152,19 @@ export default function Home() {
                     onClick={() => {
                       toast({
                         title: "LLM Explorer Help",
-                        description: "Explore token probabilities in OpenAI's language models. Type a prompt, and see not just the final response, but the probability of each token the model considered.",
+                        description: "Explore token probabilities in OpenAI language models. Type a prompt, and see not just the final response, but the probability of each token the model considered.",
                       });
                     }}
                     className="px-4 py-2 border border-primary text-primary rounded-md hover:bg-primary hover:bg-opacity-10 transition-colors"
                   >
                     HELP
                   </button>
-                  <button
+                  {passkeyRequired && <button
                     onClick={handleLogout}
                     className="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 transition-colors"
                   >
                     LOGOUT
-                  </button>
+                  </button>}
                 </>
               )}
             </div>
@@ -175,7 +172,20 @@ export default function Home() {
         </header>
 
         {/* Passkey Authentication Screen */}
-        {!isAuthenticated ? (
+        {authState === "checking" ? (
+          <div className="flex justify-center items-center min-h-[70vh] text-gray-500">Connecting…</div>
+        ) : authState === "unreachable" ? (
+          <div className="flex justify-center items-center min-h-[70vh]">
+            <Card className="w-full max-w-md p-6">
+              <CardHeader>
+                <CardTitle className="text-center text-2xl">Can't reach the model service</CardTitle>
+                <CardDescription className="text-center">
+                  The API proxy didn't respond. Check your connection and reload the page.
+                </CardDescription>
+              </CardHeader>
+            </Card>
+          </div>
+        ) : !isAuthenticated ? (
           <div className="flex justify-center items-center min-h-[70vh]">
             <Card className="w-full max-w-md p-6">
               <CardHeader>

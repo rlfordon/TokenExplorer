@@ -6,7 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { Play, X } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+import { MAX_TOKENS_CAP, MODELS, PROMPT_CHAR_CAP } from "@/lib/config";
 
 interface InputPanelProps {
   prompt: string;
@@ -35,7 +35,6 @@ export default function InputPanel({
   onSubmit,
   onClearResponse,
 }: InputPanelProps) {
-  const { toast } = useToast();
   const [tokenCount, setTokenCount] = useState<number>(0);
 
   // Estimate token count based on text length (rough approximation)
@@ -56,7 +55,7 @@ export default function InputPanel({
       <div className="mb-2 flex justify-between items-center">
         <h2 className="text-lg font-semibold">Input</h2>
         <div className="text-xs text-gray-500">
-          Est. tokens: {tokenCount}
+          Est. tokens: {tokenCount} · {prompt.length}/{PROMPT_CHAR_CAP} chars
         </div>
       </div>
 
@@ -70,6 +69,7 @@ export default function InputPanel({
           value={prompt}
           onChange={(e) => handlePromptChange(e.target.value)}
           placeholder="Enter a query here"
+          maxLength={PROMPT_CHAR_CAP}
           className="min-h-[80px] resize-y"
           disabled={isPending}
         />
@@ -91,9 +91,9 @@ export default function InputPanel({
                 <SelectValue placeholder="Model" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="gpt-4o">GPT-4o</SelectItem>
-                <SelectItem value="gpt-4o-mini">GPT-4o Mini</SelectItem>
-                <SelectItem value="gpt-3.5-turbo">GPT-3.5 Turbo</SelectItem>
+                {MODELS.map((m) => (
+                  <SelectItem key={m.id} value={m.id}>{m.label}</SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
@@ -125,7 +125,7 @@ export default function InputPanel({
             <Slider
               id="maxTokens"
               min={1}
-              max={2048}
+              max={MAX_TOKENS_CAP}
               step={1}
               value={[maxTokens]}
               onValueChange={(values) => onMaxTokensChange(values[0])}
