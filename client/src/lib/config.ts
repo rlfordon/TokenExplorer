@@ -1,6 +1,6 @@
 // Base URL of the shared Cloudflare Worker that holds the OpenRouter key (see worker/).
 // Replace with the URL Cloudflare shows after you deploy the worker.
-export const PROXY_URL = "https://rlfordon-ai-proxy.REPLACE_ME.workers.dev";
+export const PROXY_URL = "https://rlfordon-ai-proxy.rlfordon.workers.dev";
 
 // Must match TOKEN_MODELS in worker/src/index.js.
 export const MODELS = [
